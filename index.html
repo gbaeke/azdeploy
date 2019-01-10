@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"></script>
+        <script src="https://unpkg.com/vue"></script>       
+        <script src="https://secure.aadcdn.microsoftonline-p.com/lib/1.0.17/js/adal.min.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    
+    </head>
+
+    <body>
+       
+        <div  id="app">
+            <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #e3f2fd;">
+                    <div class="container-fluid">
+                        <div class="navbar-header">
+                            <a class="navbar-brand">{{ title }}</a>
+                        </div>
+                        <ul class="nav navbar-nav navbar-right">
+                                <li class="btn btn-primary btn-sm" style="margin-right: 5px;" v-if="!loggedOn" v-on:click="authContext.login(); return false">Login</button>
+                                <li class="btn btn-primary btn-sm" style="margin-right: 5px;" v-if="loggedOn" v-on:click="authContext.logOut(); return false">Logout</button>
+                                <li class="btn btn-primary btn-sm" v-on:click="launch()" v-if="loggedOn">Launch</button>
+                        </ul>
+                    </div>
+            </nav>
+            <div class="container" style="margin-top: 10px;" v-if="loggedOn">
+                <div class="card" >
+                    <div class="card-header">
+                        Select script from the list and press Launch
+                    </div>
+
+                    <div class="card-body">       
+                        <select v-model="selected">
+                            <option value="createvm">Create VM</option>
+                            <option value="createrg">Create Resource Group</option></optin>
+                        </select>
+                        <div v-if="selected=='createvm'" class="form-group">
+                            <hr>
+                            <input class="form-control" v-model="createvm.vmname" placeholder="VM name"><br>
+                            <input class="form-control" v-model="createvm.rg" placeholder="Resource group"><br>
+                            <input class="form-control" type="password" v-model="createvm.pw" placeholder="Password"></input>
+                        </div>    
+                        <div v-if="selected=='createrg'" class="form-group">
+                                <hr>
+                                <input class="form-control" v-model="createrg.rg" placeholder="Resource group name">
+                        </div>                        
+                    </div>
+                </div>
+
+                <div class="card" v-if="response">
+                    <div class="card-header">
+                        Reponse
+                    </div>
+                    <div class="card-body" >
+                        <textarea style="width: 100%; height: 400px;" readonly>{{ response }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+        
+        <script>
+             
+
+            var app = new Vue({
+                el: '#app',
+                data : {
+                    title: "Azure Deployer",
+                    selected: "",
+                    loggedOn: false,
+                    createvm: {
+                        vmname: "",
+                        rg: "",
+                        pw: ""
+                    },
+                    createrg : {
+                        rg: ""
+                    },
+                    token: "",
+                    response: "",
+                    authContext: new AuthenticationContext({
+                        clientId: '1fc9093e-8a95-44f8-b524-45c5d460b0d8',
+                        postLogoutRedirectUri: window.location  
+                    })
+                },
+                created: function() {
+                    if (this.authContext.isCallback(window.location.hash)) {
+                        console.log("In callback function...");
+                        this.authContext.handleWindowCallback();
+                        var err = this.authContext.getLoginError();
+                        if (err) {
+                            // TODO: Handle errors signing in and getting tokens
+                            console.log(err);
+                        }
+                    } else {
+                        self = this;
+                        var user = this.authContext.getCachedUser();
+                        if(user) {
+                            this.loggedOn=true;
+                            console.log("authenticated");
+                        this.authContext.acquireToken(
+                            'f2ea11dc-986d-418d-ae3f-fb40e42819bc', function (error, token) {
+                                // TODO: Handle error obtaining access token
+                                if (error || !token) { 
+                                    console.log("Error getting token: " + error)
+                                    return; }
+                                self.token = token;
+                                console.log(token);
+                            });
+                        } // if user
+                } // else (no callback)
+                },
+                methods: {
+                    getAxiosConfig: function(token) {
+                        const config = {
+                            headers: { 
+                                "authorization": "bearer " + token
+                            }
+
+                        }
+                        console.log(config)
+                        return config
+                    },
+                    launch: function() {
+                        if(this.selected == "createvm") {
+                            // create the vm
+                            self = this
+                            axios.post('https://geba-prov.azurewebsites.net/api/HttpTrigger1?code=Wp3/8jlfBY4Q9OdlxbQSuYb2RYKizM7085H8LVYPBpRBMqxlY2N7Lw==&rg=' + this.createvm.rg 
+                                + '&vmname=' + this.createvm.vmname + '&pw=' + this.createvm.pw + '&script=createvm', null, this.getAxiosConfig(this.token))
+                                .then(function(result) {
+                                    console.log("Got response...")
+                                    self.response = result.data;
+                                })
+                                .catch(function(error) {
+                                    console.log("Error calling Azure Function: " + error)
+                                })
+                        } else if(this.selected == "createrg") {
+                            // create the resource group
+                            self = this
+                            axios.post('https://geba-prov.azurewebsites.net/api/HttpTrigger1?code=Wp3/8jlfBY4Q9OdlxbQSuYb2RYKizM7085H8LVYPBpRBMqxlY2N7Lw==&rg=' 
+                                + this.createrg.rg + '&script=createrg', null, this.getAxiosConfig(this.token))
+                                .then(function(result) {
+                                    console.log("Got response...")
+                                    self.response = result.data;
+                                })
+                                .catch(function(error) {
+                                    console.log("Error calling Azure Function: " + error)
+                                })
+                        }
+                    }
+                }
+})
+        </script>
+    </body>
+        
+</html>
