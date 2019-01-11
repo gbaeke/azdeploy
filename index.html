@@ -129,26 +129,26 @@
                         if(this.selected == "createvm") {
                             // create the vm
                             self = this
-                            axios.post('https://geba-prov.azurewebsites.net/api/HttpTrigger1?code=Wp3/8jlfBY4Q9OdlxbQSuYb2RYKizM7085H8LVYPBpRBMqxlY2N7Lw==&rg=' + this.createvm.rg 
+                            axios.post('https://geba.azure-api.net/vm/create?rg=' + this.createvm.rg 
                                 + '&vmname=' + this.createvm.vmname + '&pw=' + this.createvm.pw + '&script=createvm', null, this.getAxiosConfig(this.token))
                                 .then(function(result) {
                                     console.log("Got response...")
                                     self.response = result.data;
                                 })
                                 .catch(function(error) {
-                                    console.log("Error calling Azure Function: " + error)
+                                    console.log("Error calling wbhook: " + error)
                                 })
                         } else if(this.selected == "createrg") {
                             // create the resource group
                             self = this
-                            axios.post('https://geba-prov.azurewebsites.net/api/HttpTrigger1?code=Wp3/8jlfBY4Q9OdlxbQSuYb2RYKizM7085H8LVYPBpRBMqxlY2N7Lw==&rg=' 
+                            axios.post('https://geba.azure-api.net/rg/create?rg=' 
                                 + this.createrg.rg + '&script=createrg', null, this.getAxiosConfig(this.token))
                                 .then(function(result) {
                                     console.log("Got response...")
                                     self.response = result.data;
                                 })
                                 .catch(function(error) {
-                                    console.log("Error calling Azure Function: " + error)
+                                    console.log("Error calling webhook: " + error)
                                 })
                         }
                     }
