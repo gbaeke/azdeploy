@@ -93,9 +93,9 @@
                     })
                 },
                 created: function() {
-                    // if(window.location.href.substr(0,5) !== 'https') {
-                    // window.location.href = window.location.href.replace('http', 'https');
-                    // }
+                    if(window.location.href.substr(0,5) !== 'https') {
+                    window.location.href = window.location.href.replace('http', 'https');
+                    }
 
 
                     if (this.authContext.isCallback(window.location.hash)) {
