@@ -69,6 +69,7 @@
             var app = new Vue({
                 el: '#app',
                 data : {
+                    base: "https://geba.azure-api.net",
                     title: "Azure Deployer",
                     selected: "",
                     loggedOn: false,
@@ -83,14 +84,14 @@
                     token: "",
                     response: "",
                     authContext: new AuthenticationContext({
-                        clientId: '1fc9093e-8a95-44f8-b524-45c5d460b0d8',
+                        clientId: "1fc9093e-8a95-44f8-b524-45c5d460b0d8",
                         postLogoutRedirectUri: window.location  
                     })
                 },
                 created: function() {
-                    if(window.location.href.substr(0,5) !== 'https'){
-                    window.location.href = window.location.href.replace('http', 'https');
-                    }
+                    // if(window.location.href.substr(0,5) !== 'https') {
+                    // window.location.href = window.location.href.replace('http', 'https');
+                    // }
 
 
                     if (this.authContext.isCallback(window.location.hash)) {
@@ -98,23 +99,20 @@
                         this.authContext.handleWindowCallback();
                         var err = this.authContext.getLoginError();
                         if (err) {
-                            // TODO: Handle errors signing in and getting tokens
-                            console.log(err);
+                           console.log("Error in window callback handling: " + err);
                         }
                     } else {
                         self = this;
                         var user = this.authContext.getCachedUser();
                         if(user) {
                             this.loggedOn=true;
-                            console.log("authenticated");
+                            console.log("authenticated: " + user.userName);
                         this.authContext.acquireToken(
                             '1fc9093e-8a95-44f8-b524-45c5d460b0d8', function (error, token) {
-                                // TODO: Handle error obtaining access token
                                 if (error || !token) { 
                                     console.log("Error getting token: " + error)
                                     return; }
                                 self.token = token;
-                                console.log(token);
                             });
                         } // if user
                 } // else (no callback)
@@ -127,34 +125,32 @@
                             }
 
                         }
-                        console.log(config)
                         return config
+                    },
+                    post: function(url) {
+                        this.response=""
+                        self=this
+                        axios.post(url , null, this.getAxiosConfig(this.token))
+                                .then(function(result) {
+                                    console.log("Got response...")
+                                    self.response = result.data;
+                                })
+                                .catch(function(error) {
+                                    alert("Error calling webhook: " + error)
+                                })
+
                     },
                     launch: function() {
                         if(this.selected == "createvm") {
                             // create the vm
-                            self = this
-                            axios.post('https://geba.azure-api.net/vm/create?rg=' + this.createvm.rg 
-                                + '&vmname=' + this.createvm.vmname + '&pw=' + this.createvm.pw , null, this.getAxiosConfig(this.token))
-                                .then(function(result) {
-                                    console.log("Got response...")
-                                    self.response = result.data;
-                                })
-                                .catch(function(error) {
-                                    console.log("Error calling wbhook: " + error)
-                                })
+                            url= this.base + '/vm/create?rg=' + this.createvm.rg 
+                                + '&vmname=' + this.createvm.vmname + '&pw=' + this.createvm.pw;
+                            this.post(url);
                         } else if(this.selected == "createrg") {
                             // create the resource group
-                            self = this
-                            axios.post('https://geba.azure-api.net/rg/create?rg=' 
-                                + this.createrg.rg , null, this.getAxiosConfig(this.token))
-                                .then(function(result) {
-                                    console.log("Got response...")
-                                    self.response = result.data;
-                                })
-                                .catch(function(error) {
-                                    console.log("Error calling webhook: " + error)
-                                })
+                           url = this.base + '/rg/create?rg=' + this.createrg.rg;
+                           this.post(url);
+
                         }
                     }
                 }
