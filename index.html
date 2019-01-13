@@ -39,17 +39,27 @@
                     <div class="card-body">       
                         <select v-model="selected">
                             <option value="createvm">Create VM</option>
-                            <option value="createrg">Create Resource Group</option></optin>
+                            <option value="createrg">Create Resource Group</option>
+                            <option value="createkub">Create Kubernetes cluster</option></optin>
                         </select>
                         <div v-if="selected=='createvm'" class="form-group">
                             <hr>
+                            <p>Create a virtual machine in its own network of type Standard_B1S</p>
                             <input class="form-control" v-model="createvm.vmname" placeholder="VM name"><br>
                             <input class="form-control" v-model="createvm.rg" placeholder="Resource group"><br>
                             <input class="form-control" type="password" v-model="createvm.pw" placeholder="Password"></input>
                         </div>    
                         <div v-if="selected=='createrg'" class="form-group">
                                 <hr>
+                                <p>Create a resource group</p>
                                 <input class="form-control" v-model="createrg.rg" placeholder="Resource group name">
+                        </div>
+                        <div v-if="selected=='createkub'" class="form-group">
+                            <hr>
+                            <p>Creates a Kubernetes cluster with Standard_B2s node type</p>
+                            <input class="form-control" v-model="createkub.name" placeholder="Cluster name"><br>
+                            <input class="form-control" v-model="createkub.rg" placeholder="Resource group"><br>
+                            <input class="form-control" v-model="createkub.nodecount" placeholder="Node count"></input>
                         </div>                        
                     </div>
                 </div>
@@ -86,6 +96,11 @@
                     createrg : {
                         rg: ""
                     },
+                    createkub: {
+                        rg: "",
+                        name: "",
+                        nodecount: ""
+                    },
                     token: "",
                     response: "",
                     authContext: new AuthenticationContext({
@@ -93,9 +108,9 @@
                     })
                 },
                 created: function() {
-                    if(window.location.href.substr(0,5) !== 'https') {
-                    window.location.href = window.location.href.replace('http', 'https');
-                    }
+                    // if(window.location.href.substr(0,5) !== 'https') {
+                    // window.location.href = window.location.href.replace('http', 'https');
+                    // }
 
 
                     if (this.authContext.isCallback(window.location.hash)) {
@@ -155,6 +170,11 @@
                            url = this.base + '/rg/create?rg=' + this.createrg.rg;
                            this.post(url);
 
+                        } else if(this.selected == "createkub") {
+                            // create the resource group
+                           url = this.base + '/kub/create?rg=' + this.createkub.rg + '&name=' + this.createkub.name
+                            + '&nodecount=' + this.createkub.nodecount;
+                           this.post(url);
                         }
                     }
                 }
