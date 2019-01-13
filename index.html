@@ -73,6 +73,7 @@
             var app = new Vue({
                 el: '#app',
                 data : {
+                    // base URI API Management
                     base: "https://geba.azure-api.net",
                     title: "Azure Deployer",
                     selected: "",
@@ -98,7 +99,7 @@
 
 
                     if (this.authContext.isCallback(window.location.hash)) {
-                        console.log("In callback function...");
+                        console.log("In auth callback...");
                         this.authContext.handleWindowCallback();
                         var err = this.authContext.getLoginError();
                         if (err) {
@@ -118,7 +119,7 @@
                                 self.token = token;
                             });
                         } // if user
-                } // else (no callback)
+                    } // else (no callback)
                 },
                 methods: {
                     getAxiosConfig: function(token) {
