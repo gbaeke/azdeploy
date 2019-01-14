@@ -11,7 +11,7 @@
         <script src="https://cdn.jsdelivr.net/npm/axios@0.18.0/dist/axios.min.js"></script>
         <script src="https://unpkg.com/vue"></script>       
         <script src="https://secure.aadcdn.microsoftonline-p.com/lib/1.0.17/js/adal.min.js"></script>
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     
     </head>
 
@@ -23,11 +23,11 @@
                         <div class="navbar-header">
                             <a class="navbar-brand">{{ title }}</a>
                         </div>
-                        <ul class="nav navbar-nav navbar-right">
-                                <li class="btn btn-primary btn-sm" style="margin-right: 5px;" v-if="!loggedOn" v-on:click="authContext.login(); return false">Login</button>
-                                <li class="btn btn-primary btn-sm" style="margin-right: 5px;" v-if="loggedOn" v-on:click="authContext.logOut(); return false">Logout</button>
-                                <li class="btn btn-primary btn-sm" v-on:click="launch()" v-if="loggedOn">Launch</button>
-                        </ul>
+                        <div class="nav navbar-nav navbar-right">
+                                <button class="btn btn-primary" style="margin-right: 5px;" v-if="!loggedOn" v-on:click="authContext.login(); return false">Login</button>
+                                <button class="btn btn-primary" style="margin-right: 5px;" v-if="loggedOn" v-on:click="authContext.logOut(); return false">Logout</button>
+                                
+                        </div>
                     </div>
             </nav>
             <div class="container" style="margin-top: 10px;" v-if="loggedOn">
@@ -40,6 +40,7 @@
                         <select v-model="selected">
                             <option value="createvm">Create VM</option>
                             <option value="createrg">Create Resource Group</option>
+                            <option value="listrg">List Resource Groups</option>
                             <option value="createkub">Create Kubernetes cluster</option></optin>
                         </select>
                         <div v-if="selected=='createvm'" class="form-group">
@@ -54,13 +55,24 @@
                                 <p>Create a resource group</p>
                                 <input class="form-control" v-model="createrg.rg" placeholder="Resource group name">
                         </div>
+                        <div v-if="selected=='listrg'" class="form-group">
+                            <hr>
+                            <p>List resource groups</p>
+                        </div>
                         <div v-if="selected=='createkub'" class="form-group">
                             <hr>
                             <p>Creates a Kubernetes cluster with Standard_B2s node type</p>
                             <input class="form-control" v-model="createkub.name" placeholder="Cluster name"><br>
                             <input class="form-control" v-model="createkub.rg" placeholder="Resource group"><br>
                             <input class="form-control" v-model="createkub.nodecount" placeholder="Node count"></input>
-                        </div>                        
+                        </div>
+                        <div v-if="selected != ''">
+                            <button class="btn btn-primary" v-on:click="launch()" v-if="loggedOn" :disabled="requesting">Launch</button>
+                            <span class="spinner-grow spinner-grow-sm text-warning" role="status" v-if="requesting">
+                                <span class="sr-only">Loading...</span>
+                            </span>  
+                        </div>
+                                              
                     </div>
                 </div>
 
@@ -71,6 +83,7 @@
                     <div class="card-body" >
                         <textarea style="width: 100%; height: 400px;" readonly>{{ response }}</textarea>
                     </div>
+                    
                 </div>
             </div>
 
@@ -84,9 +97,11 @@
                 el: '#app',
                 data : {
                     // base URI API Management
-                    base: "https://geba.azure-api.net",
+                    // base: "https://geba.azure-api.net",
+                    base: "https://geba-c2.azure-api.net",
                     title: "Azure Deployer",
                     selected: "",
+                    requesting: false,
                     loggedOn: false,
                     createvm: {
                         vmname: "",
@@ -148,15 +163,20 @@
                     },
                     post: function(url) {
                         this.response=""
+                        this.requesting=true;
                         self=this
                         axios.post(url , null, this.getAxiosConfig(this.token))
                                 .then(function(result) {
                                     console.log("Got response...")
                                     self.response = result.data;
+                                    self.requesting=false;
+                                    
                                 })
                                 .catch(function(error) {
-                                    alert("Error calling webhook: " + error)
+                                    alert("Error calling webhook: " + error);
+                                    self.requesting=false;
                                 })
+                       
 
                     },
                     launch: function() {
@@ -174,6 +194,10 @@
                             // create the resource group
                            url = this.base + '/kub/create?rg=' + this.createkub.rg + '&name=' + this.createkub.name
                             + '&nodecount=' + this.createkub.nodecount;
+                           this.post(url);
+                        } else if(this.selected == "listrg") {
+                            // create the resource group
+                           url = this.base + '/rg/list';
                            this.post(url);
                         }
                     }
