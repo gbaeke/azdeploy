@@ -41,7 +41,8 @@
                             <option value="createvm">Create VM</option>
                             <option value="createrg">Create Resource Group</option>
                             <option value="listrg">List Resource Groups</option>
-                            <option value="createkub">Create Kubernetes cluster</option></optin>
+                            <option value="createkub">Create Kubernetes cluster</option>
+                            <option value="createkubvmss">Create VMSS Kubernetes cluster</option>
                         </select>
                         <div v-if="selected=='createvm'" class="form-group">
                             <hr>
@@ -66,11 +67,20 @@
                             <input class="form-control" v-model="createkub.rg" placeholder="Resource group"><br>
                             <input class="form-control" v-model="createkub.nodecount" placeholder="Node count"></input>
                         </div>
+                        <div v-if="selected=='createkubvmss'" class="form-group">
+                            <hr>
+                            <p>Creates a VMSS Kubernetes cluster with Standard_B2s node type</p>
+                            <input class="form-control" v-model="createkubvmss.name" placeholder="Cluster name"><br>
+                            <input class="form-control" v-model="createkubvmss.rg" placeholder="Resource group"><br>
+                            <input class="form-control" v-model="createkubvmss.nodecount" placeholder="Node count"></input><br>
+                            <input class="form-control" v-model="createkubvmss.maxnodes" placeholder="Max nodes"></input>
+                        </div>
                         <div v-if="selected != ''">
-                            <button class="btn btn-primary" v-on:click="launch()" v-if="loggedOn" :disabled="requesting">Launch</button>
-                            <span class="spinner-grow spinner-grow-sm text-warning" role="status" v-if="requesting">
-                                <span class="sr-only">Loading...</span>
-                            </span>  
+                            <button class="btn btn-primary" v-on:click="launch()" v-if="loggedOn" :disabled="requesting">
+                                Launch
+                            </button>
+                            <span class="spinner-grow spinner-grow-sm text-warning" role="status" aria-hidden="true" v-if="requesting"></span>
+                            
                         </div>
                                               
                     </div>
@@ -88,6 +98,8 @@
             </div>
 
         </div>
+
+        
         
         
         <script>
@@ -115,6 +127,12 @@
                         rg: "",
                         name: "",
                         nodecount: ""
+                    },
+                    createkubvmss: {
+                        rg: "",
+                        name: "",
+                        nodecount: "",
+                        maxnodes: ""
                     },
                     token: "",
                     response: "",
@@ -180,23 +198,31 @@
 
                     },
                     launch: function() {
+                        // CREATE VM
                         if(this.selected == "createvm") {
-                            // create the vm
                             url= this.base + '/vm/create?rg=' + this.createvm.rg 
                                 + '&vmname=' + this.createvm.vmname + '&pw=' + this.createvm.pw;
                             this.post(url);
+
+                        // CREATE RESOURCE GROUP
                         } else if(this.selected == "createrg") {
-                            // create the resource group
                            url = this.base + '/rg/create?rg=' + this.createrg.rg;
                            this.post(url);
 
+                        // CREATE KUBERNETES CLUSTER
                         } else if(this.selected == "createkub") {
-                            // create the resource group
-                           url = this.base + '/kub/create?rg=' + this.createkub.rg + '&name=' + this.createkub.name
-                            + '&nodecount=' + this.createkub.nodecount;
+                            url = this.base + '/kub/create?rg=' + this.createkub.rg + '&name=' + this.createkub.name
+                                + '&nodecount=' + this.createkub.nodecount;
                            this.post(url);
-                        } else if(this.selected == "listrg") {
-                            // create the resource group
+                        
+                        // CREATE VMSS KUBERNETES
+                        } else if(this.selected == "createkubvmss") {
+                            url = this.base + '/kub/createvmss?rg=' + this.createkubvmss.rg + '&name=' + this.createkubvmss.name
+                                + '&nodecount=' + this.createkubvmss.nodecount + '&maxcount=' + this.createkubvmss.maxnodes
+                           this.post(url);
+                        
+                        // LIST RESOURCE GROUP
+                        }else if(this.selected == "listrg") {
                            url = this.base + '/rg/list';
                            this.post(url);
                         }
